@@ -1,0 +1,26 @@
+{
+  "name": "finpredict-backend",
+  "version": "1.0.0",
+  "description": "Backend API REST - Sistema de Gestión Financiera Predictiva",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "init-db": "node src/db/init.js",
+    "seed": "node src/db/seed.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.15",
+    "pg": "^8.13.0"
+  }
+}
