@@ -40,6 +40,11 @@ export async function login({ email, contrasena }) {
   const match = await bcrypt.compare(contrasena, usuario.contrasena_hash);
   if (!match) throw new HttpError(401, 'Credenciales inválidas');
 
+  // Un usuario bloqueado por el administrador no puede iniciar sesión
+  if (usuario.activo === false) {
+    throw new HttpError(403, 'Tu cuenta está bloqueada. Contacta al administrador.');
+  }
+
   const { contrasena_hash, ...usuarioSinHash } = usuario;
   return { usuario: usuarioSinHash, token: firmarToken(usuario) };
 }

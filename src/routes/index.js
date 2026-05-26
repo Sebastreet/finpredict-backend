@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { autenticar } from '../middlewares/auth.js';
+import { autenticar, requireRol } from '../middlewares/auth.js';
 import * as auth from '../controllers/authController.js';
 import * as cuenta from '../controllers/cuentaController.js';
 import * as categoria from '../controllers/categoriaController.js';
@@ -8,6 +8,7 @@ import * as presupuesto from '../controllers/presupuestoController.js';
 import * as alerta from '../controllers/alertaController.js';
 import * as dashboard from '../controllers/dashboardController.js';
 import * as reporte from '../controllers/reporteController.js';
+import * as usuario from '../controllers/usuarioController.js';
 
 const router = Router();
 
@@ -53,5 +54,15 @@ router.get('/dashboard', autenticar, dashboard.dashboard);
 // Reportes
 router.get('/reportes/excel', autenticar, reporte.descargarExcel);
 router.post('/reportes/email', autenticar, reporte.enviarPorCorreo);
+
+// ============================================================
+// Gestión de Usuarios — SOLO ADMINISTRADOR (requireRol(2))
+// Estas rutas implementan la diferenciación de perfiles:
+// un usuario normal recibe 403 Permiso insuficiente.
+// ============================================================
+router.get('/usuarios', autenticar, requireRol(2), usuario.listar);
+router.get('/usuarios/auditoria', autenticar, requireRol(2), usuario.auditoria);
+router.patch('/usuarios/:id/bloquear', autenticar, requireRol(2), usuario.bloquear);
+router.delete('/usuarios/:id', autenticar, requireRol(2), usuario.eliminar);
 
 export default router;

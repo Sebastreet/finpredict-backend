@@ -30,6 +30,7 @@ CREATE TABLE usuario (
     nombre           VARCHAR(100) NOT NULL,
     email            VARCHAR(100) NOT NULL UNIQUE,
     contrasena_hash  VARCHAR(255) NOT NULL,
+    activo           BOOLEAN NOT NULL DEFAULT TRUE,
     fecha_registro   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_usuario_rol FOREIGN KEY (id_rol)
         REFERENCES rol(id_rol) ON DELETE RESTRICT ON UPDATE CASCADE
@@ -46,7 +47,7 @@ CREATE TABLE cuenta (
     moneda           CHAR(3) NOT NULL DEFAULT 'CLP',
     fecha_creacion   DATE NOT NULL DEFAULT CURRENT_DATE,
     CONSTRAINT fk_cuenta_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario(id_usuario) ON DELETE RESTRICT
+        REFERENCES usuario(id_usuario) ON DELETE CASCADE
 );
 
 -- ===========================
@@ -59,7 +60,7 @@ CREATE TABLE categoria (
     tipo             CHAR(1) NOT NULL CHECK (tipo IN ('I','G')),
     color            VARCHAR(7),
     CONSTRAINT fk_categoria_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario(id_usuario) ON DELETE RESTRICT,
+        REFERENCES usuario(id_usuario) ON DELETE CASCADE,
     CONSTRAINT uk_categoria_usuario_nombre UNIQUE (id_usuario, nombre)
 );
 
@@ -92,7 +93,7 @@ CREATE TABLE presupuesto (
     periodo          VARCHAR(10) NOT NULL CHECK (periodo IN ('SEMANAL','MENSUAL')),
     vigente_desde    DATE NOT NULL,
     CONSTRAINT fk_presupuesto_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario(id_usuario) ON DELETE RESTRICT,
+        REFERENCES usuario(id_usuario) ON DELETE CASCADE,
     CONSTRAINT fk_presupuesto_categoria FOREIGN KEY (id_categoria)
         REFERENCES categoria(id_categoria) ON DELETE RESTRICT
 );
@@ -113,11 +114,30 @@ CREATE TABLE alerta (
 );
 
 -- ===========================
+-- Tabla: log_admin (auditoría de acciones administrativas)
+-- Registra cada acción que un administrador realiza sobre otros usuarios.
+-- Implementa trazabilidad y da sentido a la diferenciación de perfiles.
+-- ===========================
+CREATE TABLE log_admin (
+    id_log               BIGSERIAL PRIMARY KEY,
+    id_admin             INT NOT NULL,
+    id_usuario_afectado  INT,
+    accion               VARCHAR(20) NOT NULL CHECK (accion IN ('BLOQUEAR','DESBLOQUEAR','ELIMINAR')),
+    detalle              VARCHAR(200),
+    fecha                TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_log_admin FOREIGN KEY (id_admin)
+        REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+    CONSTRAINT fk_log_afectado FOREIGN KEY (id_usuario_afectado)
+        REFERENCES usuario(id_usuario) ON DELETE SET NULL
+);
+
+-- ===========================
 -- Índices secundarios
 -- ===========================
 CREATE INDEX idx_transaccion_cuenta_fecha ON transaccion(id_cuenta, fecha);
 CREATE INDEX idx_transaccion_categoria   ON transaccion(id_categoria);
 CREATE INDEX idx_alerta_usuario_leida    ON alerta(id_usuario, leida);
+CREATE INDEX idx_log_admin_fecha         ON log_admin(fecha DESC);
 
 -- ===========================
 -- Datos iniciales (catálogo de roles)
