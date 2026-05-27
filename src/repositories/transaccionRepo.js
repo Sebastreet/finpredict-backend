@@ -81,6 +81,26 @@ export async function gastoDiarioPromedio(id_usuario, dias = 30) {
   return parseFloat(r.rows[0].promedio_diario) || 0;
 }
 
+// Serie temporal de flujo neto diario (ingresos - gastos) agrupado por día,
+// últimos N días. Usada para ajustar la regresión lineal del saldo proyectado.
+export async function flujoNetoDiario(id_usuario, dias = 30) {
+  const r = await query(
+    `SELECT (CURRENT_DATE - t.fecha)::int AS dias_atras,
+            SUM(CASE WHEN t.tipo = 'I' THEN t.monto ELSE -t.monto END) AS neto
+     FROM transaccion t
+     JOIN cuenta c ON c.id_cuenta = t.id_cuenta
+     WHERE c.id_usuario = $1
+       AND t.fecha >= CURRENT_DATE - $2::int * INTERVAL '1 day'
+     GROUP BY t.fecha
+     ORDER BY t.fecha`,
+    [id_usuario, dias]
+  );
+  return r.rows.map((row) => ({
+    dias_atras: parseInt(row.dias_atras, 10),
+    neto: parseFloat(row.neto)
+  }));
+}
+
 // Detección de anomalía: media + 1.5*desviación estándar por categoría
 export async function umbralAnomaliaPorCategoria(id_usuario, dias = 90) {
   const r = await query(
